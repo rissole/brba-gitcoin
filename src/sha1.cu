@@ -25,7 +25,7 @@ __device__ __forceinline__ uint32_t computeSHA1Block(uint32_t* in, uint32_t id, 
     int i;
 
 #pragma unroll 11
-    for (i = 0; i < 11; i++) {
+    for (i = 0; i < 11; ++i) {
         w[i] = in[i];
     }
 
@@ -33,7 +33,7 @@ __device__ __forceinline__ uint32_t computeSHA1Block(uint32_t* in, uint32_t id, 
     w[12] = id;
 
 #pragma unroll 3
-    for (i = 13; i < 16; i++) {
+    for (i = 13; i < 16; ++i) {
         w[i] = in[i];
     }
 
@@ -947,7 +947,7 @@ shaforce(volatile uint32_t* result,
     uint32_t res;
     uint32_t global_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-    for(i = 0; i < 16; i++){
+    for(i = 0; i < 16; ++i){
         global_id |= (i << 24);
 
         res = computeSHA1Block(c_block, global_id, idx, &c_ctx);
