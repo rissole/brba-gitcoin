@@ -56,7 +56,7 @@ void* force_hash(hash_args *args){
     cudaMemset(d_result[args->device_id], 0, sizeof(uint32_t));
     gpuErrchk(copy_constants(words, &difficulty, &h_ctx));
 
-    problem_idx = 0;
+    problem_idx = args->device_id;
     while(!(*args->stop)){
         force_kernel(d_result[args->device_id], problem_idx);
 
@@ -69,7 +69,7 @@ void* force_hash(hash_args *args){
             return NULL;
         }
             
-        ++problem_idx;
+        problem_idx += NUM_DEVICES;
     }
 
     return NULL;
