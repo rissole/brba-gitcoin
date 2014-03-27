@@ -21,6 +21,8 @@
 
 #define TIMING_SLOTS 10
 
+#define NUM_DEVICES 2 // number of GPU devices
+
 typedef struct timing_info_struct {
     struct timeval start;
     struct timeval totals[10];
@@ -32,6 +34,7 @@ typedef struct hash_args_struct {
     char *msg;
     char *stop;
     char found;
+    uint32_t device_id;
 } hash_args;
 
 void reset_timing(timing_info *info);
