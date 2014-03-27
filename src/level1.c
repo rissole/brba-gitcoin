@@ -328,8 +328,8 @@ int main (int argc, char **argv) {
     push_commit = NULL;
 
     difficulty = init_args(&args[0]);
-    for (i = 0; i < NUM_DEVICES; ++i) {
-        args[i].msg = strcpy(args[0].msg);
+    for (i = 1; i < NUM_DEVICES; ++i) {
+        args[i].msg = malloc(BUFFER_LENGTH);
         args[i].stop = args[0].stop;
         args[i].found = 0;
         args[i].device_id = i;
@@ -374,6 +374,9 @@ int main (int argc, char **argv) {
 
         puts("Preparing index");
         prepare_index(index, args[0].msg);
+        for (i = 1; i < NUM_DEVICES; ++i) {
+            strcpy(args[i].msg, args[0].msg);
+        }
         time_point(&timing);
 
         printf("Starting %d brute force thread(s)\n", NUM_DEVICES);
