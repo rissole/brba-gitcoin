@@ -1,10 +1,10 @@
-NVCC = nvcc
-NVCCFLAGS = -gencode arch=compute_30,code=\"sm_30,compute_30\" -Xptxas="-v" -O3
+NVCC = /opt/cuda-5.5/bin/nvcc
+NVCCFLAGS = -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=\" sm_35,compute_35\" -Xptxas="-v" -O3
 
 CC=gcc
 CFLAGS = -Wall -O3 -mtune=native -DIMPL_CUDA
-INCLUDES = -I../libgit2/include -Isrc/ -I/usr/local/cuda/include -I/opt/nvidia/cuda/include
-LIBS = -L/usr/local/cuda/lib -L../libgit2-development/build -L/opt/nvidia/cuda/lib64 -L/lib64/ -lgit2 -lcrypto -lssl -lcuda -lcudart -lpthread
+INCLUDES = -I../libgit2/include -Isrc/ -I/opt/cuda-5.5/include/
+LIBS = -L../libgit2/build -L/opt/cuda-5.5/lib64 -L/lib64/ -lgit2 -lcrypto -lssl -lcuda -lcudart -lpthread
 
 SRCS = src/cuda.c src/common.c
 CU_SRCS = src/sha1.cu
