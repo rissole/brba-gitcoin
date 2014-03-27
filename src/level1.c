@@ -391,10 +391,12 @@ int main (int argc, char **argv) {
 
         time_point(&timing);
 
-        for (i = 0; i < NUM_DEVICES; ++i) {
-            pthread_join(hashThread[i], &status);
-            if (found_gpu < 0 && args[i].found) {
-                found_gpu = i;
+        while (found_gpu < 0) {
+            for (i = 0; i < NUM_DEVICES; ++i) {
+                if (args[i].found) {
+                    found_gpu = i;
+                    break;
+                }
             }
         }
 
