@@ -14,22 +14,19 @@ inline void gpuAssert(cudaError_t code, char *file, int line)
    }
 }
 
-uint32_t *d_result;
-uint32_t *result;
+uint32_t *d_result[NUM_DEVICES];
+uint32_t *result[NUM_DEVICES];
 uint8_t difficulty;
-int g_numDevices;
 
 int init_hasher(unsigned char diff){
     difficulty = diff;
     uint32_t i;
     
-    gpuErrchk(cudaGetDeviceCount(&g_numDevices));
-    
-    for(i = 0; i < g_numDevices; ++i)
+    for(i = 0; i < NUM_DEVICES; ++i)
     {
         cudaSetDevice(i);
-        cudaMalloc(&d_result, sizeof(uint32_t));
-        cudaMallocHost(&result, sizeof(uint32_t));
+        cudaMalloc(&d_result[i], sizeof(uint32_t));
+        cudaMallocHost(&result[i], sizeof(uint32_t));
 
         cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
     }
@@ -38,6 +35,8 @@ int init_hasher(unsigned char diff){
 }
 
 void* force_hash(hash_args *args){
+    cudaSetDevice(args->device_id);
+    
     uint32_t i;
     uint32_t problem_idx;
     SHA_CTX msg_ctx;
@@ -54,31 +53,23 @@ void* force_hash(hash_args *args){
         words[i] = __builtin_bswap32(block_ptr[i]);
     }
 
-    for(i = 0; i < g_numDevices; ++i)
-    {
-        cudaSetDevice(i);
-        cudaMemset(d_result, 0, sizeof(uint32_t));
-        gpuErrchk(copy_constants(words, &difficulty, &h_ctx));
-    }
+    cudaMemset(d_result[args->device_id], 0, sizeof(uint32_t));
+    gpuErrchk(copy_constants(words, &difficulty, &h_ctx));
 
     problem_idx = 0;
     while(!(*args->stop)){
-        for(i = 0; i < g_numDevices; ++i)
-        {
-            cudaSetDevice(i);
-            force_kernel(d_result, problem_idx);
+        force_kernel(d_result[args->device_id], problem_idx);
 
-            cudaMemcpy(result, d_result, sizeof(uint32_t),
-                            cudaMemcpyDeviceToHost);
-            if(*result){
-                args->found = 1;
-                block_ptr[12] = __builtin_bswap32((*result)-1);
-                block_ptr[11] = __builtin_bswap32(problem_idx);
-                return NULL;
-            }
-            
-            ++problem_idx;
+        cudaMemcpy(result[args->device_id], d_result[args->device_id], sizeof(uint32_t),
+                        cudaMemcpyDeviceToHost);
+        if(*(result[args->device_id])){
+            args->found = 1;
+            block_ptr[12] = __builtin_bswap32((*(result[args->device_id]))-1);
+            block_ptr[11] = __builtin_bswap32(problem_idx);
+            return NULL;
         }
+            
+        ++problem_idx;
     }
 
     return NULL;
@@ -87,10 +78,10 @@ void* force_hash(hash_args *args){
 int free_hasher(){
     uint32_t i;
     
-    for(i = 0; i < g_numDevices; ++i)
+    for(i = 0; i < NUM_DEVICES; ++i)
     {
         cudaSetDevice(i);
-        cudaFree(d_result);
+        cudaFree(d_result[i]);
     }
 
     return 0;

@@ -295,6 +295,7 @@ static unsigned char init_args(hash_args *args){
 
     args->msg = malloc(BUFFER_LENGTH);
     args->stop = &updated;
+    args->device_id = 0;
 
     return difficulty;
 }
@@ -310,12 +311,15 @@ static void init_git(git_index **index){
 
 int main (int argc, char **argv) {
     git_index *index = NULL;
-    pthread_t updateThread, hashThread;
+    pthread_t updateThread;
+    pthread_t hashThread[NUM_DEVICES];
     int rc, difficulty;
     void *status;
-    hash_args args;
+    hash_args args[NUM_DEVICES];
     timing_info timing;
     git_oid curr_commit;
+    uint32_t i;
+    int found_gpu;
 
     reset_timing(&timing);
 
@@ -323,7 +327,13 @@ int main (int argc, char **argv) {
     pthread_mutex_init(&update_mutex, NULL);
     push_commit = NULL;
 
-    difficulty = init_args(&args);
+    difficulty = init_args(&args[0]);
+    for (i = 0; i < NUM_DEVICES; ++i) {
+        args[i].msg = strcpy(args[0].msg);
+        args[i].stop = args[0].stop;
+        args[i].found = 0;
+        args[i].device_id = i;
+    }
     init_git(&index);
 
     init_hasher(difficulty);
@@ -343,7 +353,10 @@ int main (int argc, char **argv) {
     while(!stop){
         start_timing(&timing);
 
-        args.found = 0;
+        for (i = 0; i < NUM_DEVICES; ++i) {
+            args[i].found = 0;
+        }
+        found_gpu = -1;
 
         time_point(&timing);
 
@@ -360,25 +373,32 @@ int main (int argc, char **argv) {
         time_point(&timing);
 
         puts("Preparing index");
-        prepare_index(index, args.msg);
+        prepare_index(index, args[0].msg);
         time_point(&timing);
 
-        puts("Starting brute force thread");
-        rc = pthread_create(&hashThread, NULL, force_hash, &args);
-
-        time_point(&timing);
-
-        if (rc){
-            printf("ERROR creating hash thread %d\n", rc);
-            stop = 1;
-        } else {
-            pthread_join(hashThread, &status);
+        printf("Starting %d brute force thread(s)\n", NUM_DEVICES);
+        for (i = 0; i < NUM_DEVICES; ++i) {
+            rc = pthread_create(&hashThread[i], NULL, force_hash, &args[i]);
+            if (rc){
+                printf("ERROR creating hash thread %d\n", rc);
+                stop = 1;
+                break;
+            }
         }
 
         time_point(&timing);
 
-        if(!stop && !updated && args.found){
-            puts("Found one!");
+        for (i = 0; i < NUM_DEVICES; ++i) {
+            pthread_join(hashThread[i], &status);
+            if (found_gpu < 0 && args[i].found) {
+                found_gpu = i;
+            }
+        }
+
+        time_point(&timing);
+
+        if(!stop && !updated && found_gpu != -1){
+            printf("Found one on device %d!\n", found_gpu);
 
             while(push_commit){
                 usleep(10);
@@ -389,7 +409,7 @@ int main (int argc, char **argv) {
             if(!stop && !updated){
                 pthread_mutex_lock(&commit_mutex);
 
-                commit_result(args.msg, &curr_commit);
+                commit_result(args[found_gpu].msg, &curr_commit);
                 push_commit = &curr_commit;
 
                 pthread_mutex_unlock(&commit_mutex);
