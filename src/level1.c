@@ -429,7 +429,9 @@ int main (int argc, char **argv) {
     pthread_join(updateThread, &status);
 
     free_hasher();
-    free(args.msg);
+    for (i = 0; i < NUM_DEVICES; ++i) {
+        free(args[i].msg);
+    }
 
     git_index_free(index);
     git_repository_free(repo);

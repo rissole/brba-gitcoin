@@ -34,7 +34,7 @@ typedef struct hash_args_struct {
     char *msg;
     char *stop;
     char found;
-    uint32_t device_id;
+    int device_id;
 } hash_args;
 
 void reset_timing(timing_info *info);
