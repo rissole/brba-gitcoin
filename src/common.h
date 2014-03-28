@@ -32,7 +32,7 @@ typedef struct timing_info_struct {
 
 typedef struct hash_args_struct {
     char *msg;
-    char *stop;
+    volatile char *stop;
     volatile char found;
     int device_id;
 } hash_args;

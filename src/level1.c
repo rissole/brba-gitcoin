@@ -353,6 +353,7 @@ int main (int argc, char **argv) {
     while(!stop){
         start_timing(&timing);
 
+        *(args[0].stop) = 0;
         for (i = 0; i < NUM_DEVICES; ++i) {
             args[i].found = 0;
         }
@@ -395,6 +396,7 @@ int main (int argc, char **argv) {
             for (i = 0; i < NUM_DEVICES; ++i) {
                 if (args[i].found) {
                     found_gpu = i;
+                    *(args[i].stop) = 1;
                     break;
                 }
             }
