@@ -17,7 +17,7 @@ inline void gpuAssert(cudaError_t code, char *file, int line)
 uint32_t *d_result[NUM_DEVICES];
 uint32_t *result[NUM_DEVICES];
 
-int init_hasher(unsigned char){
+int init_hasher(unsigned char unused_difficulty){
     uint32_t i;
     
     for(i = 0; i < NUM_DEVICES; ++i)
