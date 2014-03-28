@@ -236,7 +236,6 @@ static void* check_updates_worker(void* arg){
 
                     fetch_updates();
                     updated = 1;
-                    hash_thread_stop = 1;
 
                     pthread_mutex_unlock(&update_mutex);
                 } else {
