@@ -24,6 +24,7 @@ char volatile stop = 0;
 char updated = 0;
 char hash_thread_stop = 0;
 git_oid *push_commit;
+unsigned char g_difficulty;
 
 pthread_mutex_t commit_mutex;
 pthread_mutex_t update_mutex;
@@ -71,6 +72,7 @@ static void reset_hard(){
     check_lg2(git_reset(repo, (git_object *)remote_commit, GIT_RESET_HARD),
               "Could not reset to remote head", NULL);
 
+    load_difficulty();
     git_object_free(remote_commit);
     git_reference_free(remote_head);
 }
@@ -286,20 +288,20 @@ static void commit_result(char* msg, git_oid *commit){
     git_odb_free(odb);
 }
 
-static unsigned char init_args(hash_args *args){
-    FILE *fp;
-    unsigned char difficulty;
+static void init_args(hash_args *args){
     char hex_difficulty[SHA_DIGEST_LENGTH*2];
-
-    fp = fopen("difficulty.txt", "r");
-    fscanf(fp, "%40c", &hex_difficulty);
-    difficulty = parse_difficulty(hex_difficulty);
 
     args->msg = malloc(BUFFER_LENGTH);
     args->stop = &hash_thread_stop;
     args->device_id = 0;
+    args->difficulty = &g_difficulty;
+}
 
-    return difficulty;
+static void load_difficulty(void){
+    FILE *fp;
+    fp = fopen("difficulty.txt", "r");
+    fscanf(fp, "%40c", &hex_difficulty);
+    g_difficulty = parse_difficulty(hex_difficulty);
 }
 
 static void init_git(git_index **index){
@@ -329,16 +331,18 @@ int main (int argc, char **argv) {
     pthread_mutex_init(&update_mutex, NULL);
     push_commit = NULL;
 
-    difficulty = init_args(&args[0]);
+    load_difficulty();
+    init_args(&args[0]);
     for (i = 1; i < NUM_DEVICES; ++i) {
         args[i].msg = malloc(BUFFER_LENGTH);
         args[i].stop = &hash_thread_stop;
         args[i].found = 0;
         args[i].device_id = i;
+        args[i].difficulty = &g_difficulty;
     }
     init_git(&index);
 
-    init_hasher(difficulty);
+    init_hasher((unsigned char)0);
 
     check_updates();
     reset_hard();

@@ -16,10 +16,8 @@ inline void gpuAssert(cudaError_t code, char *file, int line)
 
 uint32_t *d_result[NUM_DEVICES];
 uint32_t *result[NUM_DEVICES];
-uint8_t difficulty;
 
-int init_hasher(unsigned char diff){
-    difficulty = diff;
+int init_hasher(unsigned char){
     uint32_t i;
     
     for(i = 0; i < NUM_DEVICES; ++i)
@@ -42,6 +40,7 @@ void* force_hash(hash_args *args){
     SHA_CTX msg_ctx;
     uint32_t words[16];
     uint32_t *block_ptr = (uint32_t *)&args->msg[BUFFER_LENGTH-BLOCK_LENGTH];
+    uint8_t difficulty = *args->difficulty;
 
     SHA1_Init(&msg_ctx);
     SHA1_Update(&msg_ctx, args->msg, BUFFER_LENGTH-BLOCK_LENGTH);
