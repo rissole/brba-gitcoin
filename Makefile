@@ -1,5 +1,5 @@
 NVCC = /opt/cuda-5.5/bin/nvcc
-NVCCFLAGS = -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=\" sm_35,compute_35\" -Xptxas="-v" -O3
+NVCCFLAGS = -gencode arch=compute_35,code=sm_35 -Xptxas="-v" -O3
 
 CC=gcc
 CFLAGS = -Wall -O3 -mtune=native -DIMPL_CUDA

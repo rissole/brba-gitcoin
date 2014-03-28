@@ -348,7 +348,7 @@ int main (int argc, char **argv) {
         exit(-1);
     }
 
-    signal (SIGINT, int_handler);
+    //signal (SIGINT, int_handler);
 
     while(!stop){
         start_timing(&timing);
