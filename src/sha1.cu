@@ -10,7 +10,7 @@ __device__ __forceinline__ uint32_t f1(uint32_t b, uint32_t c, uint32_t d){
     return (b & c) | ((~b) & d);
 }
 
-__device__ __forceinline__ uint32_t computeSHA1Block(uint32_t* in, uint32_t id, uint32_t idx,
+__device__ __forceinline__ hash_digest_t computeSHA1Block(uint32_t* in, uint32_t id, uint32_t idx,
                                                      hash_digest_t* h)
 {
     uint32_t a = h->h0;
@@ -935,7 +935,13 @@ __device__ __forceinline__ uint32_t computeSHA1Block(uint32_t* in, uint32_t id, 
     b = a;
     a = temp;
 
-    return h->h0 + a;
+    return (hash_digest_t) { 
+        h->h0 + a,
+        h->h1 + b,
+        h->h2 + c,
+        h->h3 + d,
+        h->h4 + e
+    };
 }
 
 __global__ void
@@ -944,7 +950,7 @@ shaforce(volatile uint32_t* result,
                          const __restrict__ uint32_t idx)
 {
     uint8_t i;
-    uint32_t res;
+    hash_digest_t res;
     uint32_t global_id = blockIdx.x * blockDim.x + threadIdx.x;
 
     for(i = 0; i < 16; ++i){
@@ -952,7 +958,7 @@ shaforce(volatile uint32_t* result,
 
         res = computeSHA1Block(c_block, global_id, idx, &c_ctx);
 
-        if(res < c_difficulty){
+        if(res.h0 < c_difficulty){
             // Add one so zero can signal not-found
             atomicMax((uint32_t*)result, global_id+1);
             break;
