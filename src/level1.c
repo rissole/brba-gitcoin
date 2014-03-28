@@ -308,7 +308,7 @@ static void load_difficulty(void){
     printf("DIFFICULTY: Read from file as %s\n", hex_digest);
     
     for (i = 0; i < 5; ++i) {
-        sscanf(&hex_difficulty[8*i], "%08x", &g_difficulty[i]);
+        sscanf(&hex_digest[8*i], "%08x", &g_difficulty[i]);
     }
     
     printf("DIFFICULTY: sscanf'd as %u,%u,%u,%u,%u\n", g_difficulty[0], g_difficulty[1], g_difficulty[2], g_difficulty[3], g_difficulty[4]);

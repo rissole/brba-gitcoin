@@ -959,7 +959,7 @@ shaforce(volatile uint32_t* result,
         res = computeSHA1Block(c_block, global_id, idx, &c_ctx);
 
         if(res.h0 < c_difficulty[0] && res.h1 < c_difficulty[1] &&
-           res.h2 < c_difficulty[2] && res.h3 < c.difficulty[3] &&
+           res.h2 < c_difficulty[2] && res.h3 < c_difficulty[3] &&
            res.h4 < c_difficulty[4]){
             printf("DIFFICULTY: %u,%u,%u,%u,%u < diff\n", res.h0, res.h1, res.h2, res.h3, res.h4);
             // Add one so zero can signal not-found
