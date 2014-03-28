@@ -24,7 +24,7 @@ char volatile stop = 0;
 char updated = 0;
 char hash_thread_stop = 0;
 git_oid *push_commit;
-unsigned char g_difficulty;
+char g_difficulty[SHA_DIGEST_LENGTH*2];
 
 pthread_mutex_t commit_mutex;
 pthread_mutex_t update_mutex;
@@ -299,11 +299,10 @@ static void init_args(hash_args *args){
 
 static void load_difficulty(void){
     FILE *fp;
-    char hex_difficulty[SHA_DIGEST_LENGTH*2];
     
     fp = fopen("difficulty.txt", "r");
-    fscanf(fp, "%40c", &hex_difficulty);
-    g_difficulty = parse_difficulty(hex_difficulty);
+    fscanf(fp, "%40c", &g_difficulty);
+    printf("DIFFICULTY: Loaded as %s\n", g_difficulty);
 }
 
 static void init_git(git_index **index){
@@ -319,7 +318,7 @@ int main (int argc, char **argv) {
     git_index *index = NULL;
     pthread_t updateThread;
     pthread_t hashThread[NUM_DEVICES];
-    int rc, difficulty;
+    int rc;
     void *status;
     hash_args args[NUM_DEVICES];
     timing_info timing;

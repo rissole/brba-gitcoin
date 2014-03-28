@@ -40,7 +40,7 @@ void* force_hash(hash_args *args){
     SHA_CTX msg_ctx;
     uint32_t words[16];
     uint32_t *block_ptr = (uint32_t *)&args->msg[BUFFER_LENGTH-BLOCK_LENGTH];
-    uint8_t difficulty = *args->difficulty;
+    char difficulty[SHA_DIGEST_LENGTH*2] = *args->difficulty;
 
     SHA1_Init(&msg_ctx);
     SHA1_Update(&msg_ctx, args->msg, BUFFER_LENGTH-BLOCK_LENGTH);
