@@ -311,7 +311,7 @@ static void load_difficulty(void){
         sscanf(&hex_digest[8*i], "%08x", &g_difficulty[i]);
     }
     
-    printf("DIFFICULTY: sscanf'd as %u,%u,%u,%u,%u\n", g_difficulty[0], g_difficulty[1], g_difficulty[2], g_difficulty[3], g_difficulty[4]);
+    printf("DIFFICULTY: sscanf'd as %08x,%08x,%08x,%08x,%08x\n", g_difficulty[0], g_difficulty[1], g_difficulty[2], g_difficulty[3], g_difficulty[4]);
 }
 
 static void init_git(git_index **index){
