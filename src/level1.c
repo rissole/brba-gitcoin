@@ -29,6 +29,8 @@ unsigned char g_difficulty;
 pthread_mutex_t commit_mutex;
 pthread_mutex_t update_mutex;
 
+static void load_difficulty(void);
+
 // Copied from libgit2 examples
 static int log_lg2(int error, const char *message, const char *extra){
     const git_error *lg2err;
@@ -289,8 +291,6 @@ static void commit_result(char* msg, git_oid *commit){
 }
 
 static void init_args(hash_args *args){
-    char hex_difficulty[SHA_DIGEST_LENGTH*2];
-
     args->msg = malloc(BUFFER_LENGTH);
     args->stop = &hash_thread_stop;
     args->device_id = 0;
@@ -299,6 +299,8 @@ static void init_args(hash_args *args){
 
 static void load_difficulty(void){
     FILE *fp;
+    char hex_difficulty[SHA_DIGEST_LENGTH*2];
+    
     fp = fopen("difficulty.txt", "r");
     fscanf(fp, "%40c", &hex_difficulty);
     g_difficulty = parse_difficulty(hex_difficulty);
