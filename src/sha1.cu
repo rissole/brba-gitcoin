@@ -960,7 +960,7 @@ shaforce(volatile uint32_t* result,
         uint8_t found = 0;
         if((res.h0 < c_difficulty[0]) ||
            (res.h0 == c_difficulty[0] && res.h1 < c_difficulty[1])) {
-            printf("DIFFICULTY: %08x,%08x < diff\n", res.h0, res.h1);
+            printf("DIFFICULTY: %08x,%08x < %08x,%08x\n", res.h0, res.h1, c_difficulty[0], c_difficulty[1]);
             // Add one so zero can signal not-found
             atomicMax((uint32_t*)result, global_id+1);
             break;
