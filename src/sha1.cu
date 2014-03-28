@@ -957,13 +957,10 @@ shaforce(volatile uint32_t* result,
         global_id |= (i << 24);
 
         res = computeSHA1Block(c_block, global_id, idx, &c_ctx);
-
-        if((res.h0 == 0 || res.h0 < c_difficulty[0]) &&
-           (res.h1 == 0 || res.h1 < c_difficulty[1]) &&
-           (res.h2 == 0 || res.h2 < c_difficulty[2]) &&
-           (res.h3 == 0 || res.h3 < c_difficulty[3]) &&
-           (res.h4 == 0 || res.h4 < c_difficulty[4])) {
-            printf("DIFFICULTY: %u,%u,%u,%u,%u < diff\n", res.h0, res.h1, res.h2, res.h3, res.h4);
+        uint8_t found = 0;
+        if((res.h0 < c_difficulty[0]) ||
+           (res.h0 == c_difficulty[0] && res.h1 < c_difficulty[1])) {
+            printf("DIFFICULTY: %08x,%08x < diff\n", res.h0, res.h1);
             // Add one so zero can signal not-found
             atomicMax((uint32_t*)result, global_id+1);
             break;
