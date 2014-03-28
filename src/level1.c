@@ -22,6 +22,7 @@ git_repository *repo = NULL;
 
 char volatile stop = 0;
 char updated = 0;
+char hash_thread_stop = 0;
 git_oid *push_commit;
 
 pthread_mutex_t commit_mutex;
@@ -235,6 +236,7 @@ static void* check_updates_worker(void* arg){
 
                     fetch_updates();
                     updated = 1;
+                    hash_thread_stop = 1;
 
                     pthread_mutex_unlock(&update_mutex);
                 } else {
@@ -247,6 +249,7 @@ static void* check_updates_worker(void* arg){
                 if(check_updates()){
                     pthread_mutex_lock(&update_mutex);
                     updated = 1;
+                    hash_thread_stop = 1;
                     pthread_mutex_unlock(&update_mutex);
                 }
             }
@@ -294,7 +297,7 @@ static unsigned char init_args(hash_args *args){
     difficulty = parse_difficulty(hex_difficulty);
 
     args->msg = malloc(BUFFER_LENGTH);
-    args->stop = &updated;
+    args->stop = &hash_thread_stop;
     args->device_id = 0;
 
     return difficulty;
@@ -330,7 +333,7 @@ int main (int argc, char **argv) {
     difficulty = init_args(&args[0]);
     for (i = 1; i < NUM_DEVICES; ++i) {
         args[i].msg = malloc(BUFFER_LENGTH);
-        args[i].stop = args[0].stop;
+        args[i].stop = &hash_thread_stop;
         args[i].found = 0;
         args[i].device_id = i;
     }
@@ -353,7 +356,7 @@ int main (int argc, char **argv) {
     while(!stop){
         start_timing(&timing);
 
-        *(args[0].stop) = 0;
+        hash_thread_stop = 0;
         for (i = 0; i < NUM_DEVICES; ++i) {
             args[i].found = 0;
         }
@@ -396,7 +399,7 @@ int main (int argc, char **argv) {
             for (i = 0; i < NUM_DEVICES; ++i) {
                 if (args[i].found) {
                     found_gpu = i;
-                    *(args[i].stop) = 1;
+                    hash_thread_stop = 1;
                     break;
                 }
             }
