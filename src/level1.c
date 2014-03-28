@@ -378,7 +378,7 @@ int main (int argc, char **argv) {
         puts("Preparing index");
         prepare_index(index, args[0].msg);
         for (i = 1; i < NUM_DEVICES; ++i) {
-            strcpy(args[i].msg, args[0].msg);
+            memcpy(args[i].msg, args[0].msg, BUFFER_LENGTH);
         }
         time_point(&timing);
 
