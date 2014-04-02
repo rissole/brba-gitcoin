@@ -957,7 +957,6 @@ shaforce(volatile uint32_t* result,
         global_id |= (i << 24);
 
         res = computeSHA1Block(c_block, global_id, idx, &c_ctx);
-        uint8_t found = 0;
         if((res.h0 < c_difficulty[0]) ||
            (res.h0 == 0 && res.h1 < c_difficulty[1])) {
             printf("DIFFICULTY: %08x,%08x < %08x,%08x\n", res.h0, res.h1, c_difficulty[0], c_difficulty[1]);

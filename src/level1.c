@@ -22,7 +22,7 @@ git_repository *repo = NULL;
 
 char volatile stop = 0;
 char updated = 0;
-char hash_thread_stop = 0;
+volatile char hash_thread_stop = 0;
 git_oid *push_commit;
 unsigned int g_difficulty[5];
 
@@ -74,6 +74,7 @@ static void reset_hard(){
     check_lg2(git_reset(repo, (git_object *)remote_commit, GIT_RESET_HARD),
               "Could not reset to remote head", NULL);
 
+    puts("we reset the repo!");
     load_difficulty();
     git_object_free(remote_commit);
     git_reference_free(remote_head);
@@ -151,13 +152,15 @@ static int check_updates(){
     check_lg2(git_reference_lookup(&after_head, repo, "refs/remotes/origin/master"),
               "Could not lookup master branch (after)", NULL);
 
+    puts("Checked for update");
     // Fetch updated things
-    if(git_reference_cmp(before_head, after_head)){
+    if(!push_commit && git_reference_cmp(before_head, after_head)){
         puts("Update detected");
         retval = 1;
     } else {
         retval = 0;
     }
+
 
     git_reference_free(before_head);
     git_reference_free(after_head);
@@ -229,7 +232,7 @@ static void* check_updates_worker(void* arg){
     while(!stop){
         start_timing(&timing);
 
-        if(!updated && push_commit){
+        if(!updated){
             if(push_commit){
                 pthread_mutex_lock(&commit_mutex);
 
@@ -240,6 +243,7 @@ static void* check_updates_worker(void* arg){
 
                     fetch_updates();
                     updated = 1;
+                    hash_thread_stop = 1;
 
                     pthread_mutex_unlock(&update_mutex);
                 } else {
@@ -251,6 +255,7 @@ static void* check_updates_worker(void* arg){
             } else {
                 if(check_updates()){
                     pthread_mutex_lock(&update_mutex);
+                    reset_hard();
                     updated = 1;
                     hash_thread_stop = 1;
                     pthread_mutex_unlock(&update_mutex);
@@ -298,7 +303,7 @@ static void init_args(hash_args *args){
 }
 
 static void load_difficulty(void){
-    FILE *fp;
+    /*FILE *fp;
     char hex_digest[SHA_DIGEST_LENGTH*2];
     uint32_t i;
     
@@ -308,10 +313,15 @@ static void load_difficulty(void){
     printf("DIFFICULTY: Read from file as %s\n", hex_digest);
     
     for (i = 0; i < 5; ++i) {
-        sscanf(&hex_digest[8*i], "%08x", &g_difficulty[i]);
+        sscanf(&hex_digest[8*i], "%8x", &g_difficulty[i]);
     }
     
-    printf("DIFFICULTY: sscanf'd as %08x,%08x,%08x,%08x,%08x\n", g_difficulty[0], g_difficulty[1], g_difficulty[2], g_difficulty[3], g_difficulty[4]);
+    printf("DIFFICULTY: sscanf'd as %08x,%08x,%08x,%08x,%08x\n", g_difficulty[0], g_difficulty[1], g_difficulty[2], g_difficulty[3], g_difficulty[4]);*/
+    g_difficulty[0] = 0x00000000;
+    g_difficulty[1] = 0x001fffff;
+    g_difficulty[2] = 0xffffffff;
+    g_difficulty[3] = 0xffffffff;
+    g_difficulty[4] = 0xffffffff;
 }
 
 static void init_git(git_index **index){
@@ -357,12 +367,12 @@ int main (int argc, char **argv) {
     check_updates();
     reset_hard();
 
-    puts("Starting update thread");
+    /*puts("Starting update thread");
     rc = pthread_create(&updateThread, NULL, check_updates_worker, NULL);
     if (rc){
         printf("ERROR creating update thread %d\n", rc);
         exit(-1);
-    }
+    }*/
 
     //signal (SIGINT, int_handler);
 
@@ -408,7 +418,7 @@ int main (int argc, char **argv) {
 
         time_point(&timing);
 
-        while (found_gpu < 0) {
+        while (found_gpu < 0 && !hash_thread_stop) {
             for (i = 0; i < NUM_DEVICES; ++i) {
                 if (args[i].found) {
                     found_gpu = i;
@@ -434,6 +444,7 @@ int main (int argc, char **argv) {
 
                 commit_result(args[found_gpu].msg, &curr_commit);
                 push_commit = &curr_commit;
+                push_result_shell(push_commit, NULL);
 
                 pthread_mutex_unlock(&commit_mutex);
             }
